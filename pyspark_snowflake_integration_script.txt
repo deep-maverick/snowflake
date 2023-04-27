@@ -1,0 +1,92 @@
+"""
+#pyspark and snowflake sample script
+#pyspark uses a Snowflake internal stage for storing temporary data and, therefore, 
+#does not require an S3 location for storing this data.
+#config python script to perform sql queries and other operations
+
+download required drivers for snowflake pyspark interface
+#-download sparksnowflake dependancy driver jar file from 
+#https://mvnrepository.com/artifact/net.snowflake/spark-snowflake_2.12/2.11.0-spark_3.1 
+#-download spark jdbc driver jar from
+#https://mvnrepository.com/artifact/net.snowflake/snowflake-jdbc/3.13.22
+
+"""
+
+
+#--------------------------------------spark_Script-----------------------
+
+from pyspark.sql import *
+from pyspark.sql.functions import *
+
+from pyspark.sql import *
+from pyspark.sql.functions import *
+
+# creating spark session object
+spark = SparkSession.builder.master("local[2]").appName("test")\
+    .config("spark.jars","D:\BigDataSoftware\Spark_SoftWares\spark-3.1.2-bin-hadoop3.2\jars\spark-snowflake_2.12-2.11.0-spark_3.1")\
+    .getOrCreate()
+sc=spark.sparkContext
+sc._jvm.net.snowflake.spark.snowflake.SnowflakeConnectorUtils.disablePushdownSession(sc._jvm.org.apache.spark.sql.SparkSession.builder().getOrCreate())
+
+# call the SnowflakeConnectorUtils
+
+
+# You might need to set these
+sc._jsc.hadoopConfiguration().set("fs.s3n.awsAccessKeyId", "AKIASS2AZ5BBR7PTM7HY")
+sc._jsc.hadoopConfiguration().set("fs.s3n.awsSecretAccessKey", "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")
+
+
+# Set options below
+sfOptions = {
+  "sfURL" : "uaypbck-fm10455.snowflakecomputing.com",
+  "sfUser" : "deep470",
+  "sfPassword" : "Vaishnavi19",
+  "sfDatabase" : "SNOWFLAKE_SAMPLE_DATA",
+  "sfSchema" : "TPCH_SF10",
+  "sfWarehouse" : "SMALL_WH"
+}
+#"SNOWFLAKE_SAMPLE_DATA"."TPCH_SF10"."CUSTOMER"
+
+SNOWFLAKE_SOURCE_NAME = "net.snowflake.spark.snowflake"
+
+df = spark.read.format(SNOWFLAKE_SOURCE_NAME) \
+  .options(**sfOptions) \
+  .option("query",  "select * from customer where c_custkey=270001")\
+  .option("autopushdown","off").load()
+
+df.show()
+
+#----------------------write script----------------------
+#write into snowflake table
+
+from pyspark.sql import *
+from pyspark.sql.functions import *
+
+from pyspark.sql import *
+from pyspark.sql.functions import *
+
+# creating spark session object
+spark = SparkSession.builder.master("local[2]").appName("test")\
+    .config("spark.jars","D:\BigDataSoftware\Spark_SoftWares\spark-3.1.2-bin-hadoop3.2\jars\spark-snowflake_2.12-2.11.0-spark_3.1")\
+    .getOrCreate()
+sc=spark.sparkContext
+# call the SnowflakeConnectorUtils
+sc._jvm.net.snowflake.spark.snowflake.SnowflakeConnectorUtils.disablePushdownSession(sc._jvm.org.apache.spark.sql.SparkSession.builder().getOrCreate())
+
+# Set options below
+sfOptions = {
+  "sfURL" : "uaypbck-fm10455.snowflakecomputing.com",
+  "sfUser" : "deep470",
+  "sfPassword" : "Vaishnavi19",
+  "sfDatabase" : "UDEMY_DB",
+  "sfSchema" : "UDEMY_SCHEMA",
+  "sfWarehouse" : "SMALL_WH"
+}
+data="D:\Data_Engg_Notes\spark\Spark_dataset\\bank-full.csv"
+df=spark.read.format("csv").option("header","true").option("sep",";").option("inferSchema","true").load(data)
+df.show()
+
+SNOWFLAKE_SOURCE_NAME = "net.snowflake.spark.snowflake"
+df.write.mode("overwrite").format(SNOWFLAKE_SOURCE_NAME)\
+  .options(**sfOptions) \
+  .option("dbtable","banktab").save()
